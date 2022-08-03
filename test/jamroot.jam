@@ -10,7 +10,12 @@ project test
   ;
 
 
-run function.cpp : requirements ;
+for src in
+  function.cpp
+  convenience.cpp
+{
+  run $(src) ;
+}
 
 
 for header in [ glob-tree-ex ../include : *.hpp ] {

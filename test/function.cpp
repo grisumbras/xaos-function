@@ -1,4 +1,4 @@
-#include <xaos/function.hpp>
+#include <xaos/function/function.hpp>
 
 #include <boost/core/lightweight_test.hpp>
 
