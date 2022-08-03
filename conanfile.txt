@@ -1,0 +1,12 @@
+[build_requires]
+b2/4.9.2
+
+[requires]
+boost/1.79.0
+
+[generators]
+virtualenv
+b2
+
+[options]
+boost:header_only = True

@@ -1,0 +1,30 @@
+import path ;
+import print ;
+import regex ;
+import testing ;
+
+
+project test
+  : requirements
+    <library>/xaos-function//libs
+  ;
+
+
+run function.cpp : requirements ;
+
+
+for header in [ glob-tree-ex ../include : *.hpp ] {
+  local name = [ path.make $(header:G=) ] ;
+  name = [ path.relative $(name) ../include ] ;
+  name = [ regex.replace $(name:D) / - ] ;
+  name = $(name)-$(header:BS=.cpp) ;
+  make $(name) : $(header) : @create-include-test ;
+  compile $(name) ;
+}
+
+rule create-include-test ( target : header : properties * ) {
+  local path = [ path.make $(header:G=) ] ;
+  path = [ path.relative $(path) ../include ] ;
+  print.output $(target) ;
+  print.text "#include <$(path)>" "#include <$(path)>" : overwrite ;
+}

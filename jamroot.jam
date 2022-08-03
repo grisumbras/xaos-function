@@ -1,0 +1,13 @@
+import testing ;
+
+
+project xaos-function ;
+
+alias libs
+  : /boost//libs
+  : usage-requirements
+    <include>include
+  ;
+
+
+build-project test ;
