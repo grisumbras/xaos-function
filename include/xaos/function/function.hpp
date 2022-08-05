@@ -40,7 +40,7 @@ public:
 private:
   friend invoker_base;
 
-  using holder_base = function_detail::holder_for<Signature>;
+  using holder_base = function_detail::holder_base_for<false, Signature>;
 
   std::unique_ptr<holder_base> holder_;
 };
@@ -49,7 +49,7 @@ private:
 template <class Signature>
 template <class F>
 function<Signature>::function(F f)
-  : holder_(function_detail::make_holder<Signature>(f))
+  : holder_(function_detail::make_holder<false, Signature>(f))
 {}
 
 

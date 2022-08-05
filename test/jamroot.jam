@@ -12,6 +12,7 @@ project test
 
 for src in
   function.cpp
+  copyable_function.cpp
   convenience.cpp
 {
   run $(src) ;
