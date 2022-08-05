@@ -4,6 +4,7 @@
 
 #include <xaos/function/detail/mpl.hpp>
 
+#include <boost/core/empty_value.hpp>
 #include <boost/static_assert.hpp>
 
 #include <memory>
@@ -34,20 +35,23 @@ struct holder_impl;
 
 template <class R, class... Args, class F, bool IsBaseCloneable>
 struct holder_impl<R(Args...), F, false, IsBaseCloneable>
-  : holder_impl_base<R(Args...), IsBaseCloneable> {
+  : holder_impl_base<R(Args...), IsBaseCloneable>
+  , boost::empty_value<F, 0> {
   BOOST_STATIC_ASSERT(!std::is_lvalue_reference<F>::value);
 
   using impl_base = holder_impl_base<R(Args...), IsBaseCloneable>;
+  using func_base = boost::empty_value<F, 0>;
 
-  F f_;
+  explicit holder_impl(F f) : func_base(boost::empty_init_t(), std::move(f)) {}
 
-  explicit holder_impl(F f) : f_(std::move(f)) {}
-
-  auto target() noexcept -> void* override { return std::addressof(f_); }
+  auto target() noexcept -> void* override
+  {
+    return std::addressof(func_base::get());
+  }
 
   auto invoke(Args... args) -> R override
   {
-    return f_(static_cast<Args>(args)...);
+    return func_base::get()(static_cast<Args>(args)...);
   }
 };
 
@@ -60,7 +64,7 @@ struct holder_impl<Signature, F, true, true>
 
   auto clone() const -> std::unique_ptr<typename base_type::impl_base> override
   {
-    return std::make_unique<holder_impl>(this->f_);
+    return std::make_unique<holder_impl>(base_type::func_base::get());
   }
 };
 
