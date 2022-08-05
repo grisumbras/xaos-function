@@ -3,6 +3,8 @@
 
 #include <boost/core/lightweight_test.hpp>
 
+#include <iostream>
+
 
 template <template <class...> class Function>
 void test_common()
@@ -11,6 +13,7 @@ void test_common()
   {
     auto called = false;
     auto f = Function<void()>([&called] { called = true; });
+    BOOST_TEST(f);
     BOOST_TEST_NOT(called);
     f();
     BOOST_TEST(called);
@@ -19,6 +22,7 @@ void test_common()
   {
     int output = 0;
     auto f = Function<void(int)>([&output](int n) { output = n; });
+    BOOST_TEST(f);
     BOOST_TEST_EQ(output, 0);
     f(1);
     BOOST_TEST_EQ(output, 1);
@@ -30,6 +34,7 @@ void test_common()
   // R(arg)
   {
     auto f = Function<int(int)>([](int n) { return 2 * n; });
+    BOOST_TEST(f);
     BOOST_TEST_EQ(f(1), 2);
     BOOST_TEST_EQ(f(2), 4);
     BOOST_TEST_EQ(f(3), 6);
@@ -90,6 +95,29 @@ void test_common()
     ctarget();
     BOOST_TEST_EQ(n, 3);
     BOOST_TEST_EQ(&target, &ctarget);
+  }
+  // default constructor
+  {
+    auto f = Function<int(int)>();
+    BOOST_TEST_NOT(f);
+    try {
+      f.invoke(1);
+    } catch (boost::system::system_error const& e) {
+      BOOST_TEST(e.code() == xaos::function_error::empty_function_called);
+    }
+
+    f = [](int n) { return n * n; };
+    BOOST_TEST(f);
+    BOOST_TEST_EQ(f(5), 25);
+    BOOST_TEST_EQ(f.invoke(6), 36);
+  }
+  // move
+  {
+    auto f = Function<int(int)>([](int n) { return n; });
+
+    auto g = std::move(f);
+    BOOST_TEST_NOT(f);
+    BOOST_TEST(g);
   }
 }
 

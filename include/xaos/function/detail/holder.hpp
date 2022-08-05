@@ -72,11 +72,15 @@ template <class Signature>
 struct holder<Signature, false> {
   using impl_base = holder_impl_base<Signature, false>;
 
+
+  holder() noexcept = default;
+
   template <class F>
   holder(F f)
     : holder_(
       std::make_unique<holder_impl<Signature, F, false, false>>(std::move(f)))
   {}
+
 
   std::unique_ptr<impl_base> holder_;
 };
@@ -84,6 +88,9 @@ struct holder<Signature, false> {
 template <class Signature>
 struct holder<Signature, true> {
   using impl_base = holder_impl_base<Signature, true>;
+
+
+  holder() noexcept = default;
 
   template <class F>
   holder(F f)
@@ -101,6 +108,7 @@ struct holder<Signature, true> {
     auto temp = other;
     return (*this) = std::move(temp);
   }
+
 
   std::unique_ptr<impl_base> holder_;
 };

@@ -25,8 +25,12 @@ public:
   using signature = Signature;
   using result_type = typename invoker_base::result_type;
 
+  basic_function() = default;
+
   template <class F>
   basic_function(F f);
+
+  operator bool() const noexcept;
 
   template <class F>
   auto target() noexcept -> F*;
@@ -35,6 +39,7 @@ public:
   auto target() const noexcept -> F const*;
 
   using invoker_base::operator();
+  using invoker_base::invoke;
 };
 
 
@@ -42,6 +47,13 @@ template <class S, bool C>
 template <class F>
 basic_function<S, C>::basic_function(F f) : holder_base(std::move(f))
 {}
+
+
+template <class S, bool C>
+basic_function<S, C>::operator bool() const noexcept
+{
+  return static_cast<bool>(this->holder_);
+}
 
 
 template <class S, bool C>
