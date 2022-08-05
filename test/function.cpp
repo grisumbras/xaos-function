@@ -1,14 +1,16 @@
+#include <xaos/function/copyable_function.hpp>
 #include <xaos/function/function.hpp>
 
 #include <boost/core/lightweight_test.hpp>
 
 
-int main()
+template <template <class...> class Function>
+void test_common()
 {
   // void()
   {
     auto called = false;
-    auto f = xaos::function<void()>([&called] { called = true; });
+    auto f = Function<void()>([&called] { called = true; });
     BOOST_TEST_NOT(called);
     f();
     BOOST_TEST(called);
@@ -16,7 +18,7 @@ int main()
   // void(arg)
   {
     int output = 0;
-    auto f = xaos::function<void(int)>([&output](int n) { output = n; });
+    auto f = Function<void(int)>([&output](int n) { output = n; });
     BOOST_TEST_EQ(output, 0);
     f(1);
     BOOST_TEST_EQ(output, 1);
@@ -27,7 +29,7 @@ int main()
   }
   // R(arg)
   {
-    auto f = xaos::function<int(int)>([](int n) { return 2 * n; });
+    auto f = Function<int(int)>([](int n) { return 2 * n; });
     BOOST_TEST_EQ(f(1), 2);
     BOOST_TEST_EQ(f(2), 4);
     BOOST_TEST_EQ(f(3), 6);
@@ -39,19 +41,10 @@ int main()
   }
   // mutable
   {
-    auto f = xaos::function<int()>([n = 0]() mutable { return ++n * 2; });
+    auto f = Function<int()>([n = 0]() mutable { return ++n * 2; });
     BOOST_TEST_EQ(f(), 2);
     BOOST_TEST_EQ(f(), 4);
     BOOST_TEST_EQ(f(), 6);
-  }
-  // non-copyable f
-  {
-    auto state = std::make_unique<int>(0);
-    auto f = xaos::function<int()>(
-      [state = std::move(state)]() mutable { return ++(*state); });
-    BOOST_TEST_EQ(f(), 1);
-    BOOST_TEST_EQ(f(), 2);
-    BOOST_TEST_EQ(f(), 3);
   }
   // destuctor for f called
   {
@@ -60,11 +53,11 @@ int main()
       delete ptr;
       called = true;
     };
-    auto state = std::unique_ptr<int, decltype(deleter)>(new int(), deleter);
+    auto state = std::shared_ptr<int>(new int(), deleter);
     BOOST_TEST_NOT(called);
 
     {
-      auto f = xaos::function<int()>(
+      auto f = Function<int()>(
         [state = std::move(state)]() mutable { return ++(*state); });
       BOOST_TEST_NOT(called);
       BOOST_TEST_EQ(f(), 1);
@@ -75,7 +68,7 @@ int main()
   }
   // const-qualified operator()
   {
-    auto const f = xaos::function<int(int) const>([](int n) { return n; });
+    auto const f = Function<int(int) const>([](int n) { return n; });
     BOOST_TEST_EQ(f(1), 1);
     BOOST_TEST_EQ(f(2), 2);
     BOOST_TEST_EQ(f(3), 3);
@@ -97,6 +90,31 @@ int main()
     ctarget();
     BOOST_TEST_EQ(n, 3);
     BOOST_TEST_EQ(&target, &ctarget);
+  }
+}
+
+
+int main()
+{
+  test_common<xaos::function>();
+  // non-copyable f
+  {
+    auto state = std::make_unique<int>(0);
+    auto f = xaos::function<int()>(
+      [state = std::move(state)]() mutable { return ++(*state); });
+    BOOST_TEST_EQ(f(), 1);
+    BOOST_TEST_EQ(f(), 2);
+    BOOST_TEST_EQ(f(), 3);
+  }
+
+  test_common<xaos::copyable_function>();
+  // copy
+  {
+    auto func = [] {};
+    auto const f_ptr = +func;
+    auto const f = xaos::copyable_function<void()>(f_ptr);
+    auto const g = f;
+    BOOST_TEST_EQ(*f.target<decltype(f_ptr)>(), *g.target<decltype(f_ptr)>());
   }
 
   return boost::report_errors();
