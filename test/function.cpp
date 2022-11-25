@@ -2,6 +2,7 @@
 #include <xaos/function/function.hpp>
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 
 #include <iostream>
 
@@ -124,6 +125,31 @@ void test_common()
 
 int main()
 {
+  namespace d = xaos::function_detail;
+  BOOST_TEST_TRAIT_SAME(
+    d::vtable_for<void(), false>,
+    std::tuple<
+      void (*)(void*),
+      void* (*)(void*),
+      void (*)(void*),
+      void (*)(void*, void*)>);
+  BOOST_TEST_TRAIT_SAME(
+    d::vtable_for<void(), true>,
+    std::tuple<
+      void (*)(void*),
+      void* (*)(void*),
+      void (*)(void*),
+      void (*)(void*, void*),
+      void (*)(void*, void*)>);
+  BOOST_TEST_TRAIT_SAME(
+    d::vtable_for<int(double, float const&), true>,
+    std::tuple<
+      int (*)(void*, double, float const&),
+      void* (*)(void*),
+      void (*)(void*),
+      void (*)(void*, void*),
+      void (*)(void*, void*)>);
+
   test_common<xaos::function>();
   // non-copyable f
   {
